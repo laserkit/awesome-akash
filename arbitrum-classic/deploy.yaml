@@ -1,0 +1,39 @@
+---
+version: "2.0"
+
+services:
+  arb:
+    image: offchainlabs/arb-node:v1.4.5-e97c1a4
+    expose: 
+    - port: 8547
+      as: 8547
+      to:
+        - global: true
+    - port: 8548
+      as: 8548
+      to:
+        - global: true
+    args:
+    - "--l1.url=https://ethereum-rpc.publicnode.com/"
+    - "--node.chain-id=42161"
+profiles:
+  compute:
+    arb:
+      resources:
+        cpu:
+          units: 4
+        memory:
+          size: 16Gi
+        storage:
+        - size: 500Gi
+  placement:
+    westcoast:
+      pricing:
+        arb:
+          denom: uakt
+          amount: 1000
+deployment:
+  arb:
+    westcoast:
+      profile: arb
+      count: 1
