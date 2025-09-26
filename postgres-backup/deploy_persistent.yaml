@@ -1,0 +1,78 @@
+---
+version: "2.0"
+services:
+  postgres:
+    image: postgres:16.10-alpine3.22
+    expose:
+      - port: 5432
+        as: 5432
+        to:
+          - global: true
+          - service: backup
+    env:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+    params:
+      storage:
+        data:
+          mount: /var/lib/postgres
+          readOnly: false
+  backup:
+    image: "laserkit/akash-postgres-backup:v0.0.2"
+    expose:
+      - port: 80
+        as: 80
+        to:
+          - global: true
+    env:
+      - STORJ_ENDPOINT=https://gateway.storjshare.io
+      - STORJ_BUCKET=bucket
+      - STORJ_ACCESS_KEY=key
+      - STORJ_SECRET_KEY=secret
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+profiles:
+  compute:
+    postgres:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 1Gi
+        storage:
+          - size: 1Gi
+          - name: data
+            size: 1Gi
+            attributes:
+              persistent: true
+              class: beta3
+    backup:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 1Gi
+        storage:
+          - size: 1Gi
+  placement:
+    dcloud:
+      pricing:
+        postgres:
+          denom: uakt
+          amount: 100000
+        backup:
+          denom: uakt
+          amount: 100000
+deployment:
+  postgres:
+    dcloud:
+      profile: postgres
+      count: 1
+  backup:
+    dcloud:
+      profile: backup
+      count: 1
